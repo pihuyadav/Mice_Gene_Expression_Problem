@@ -110,4 +110,95 @@ test_error<-test_error+(y_predict-y_test)^2
 test_error
 #Output = 1.008477 
 
-#Maybe can implement KNN--but not enough data (discuss!)
+#Maybe can implement KNN--but not enough data 
+mis_classified_vector<-rep(1:15)
+
+#Columns to include (everything except "Gene.Name","Mapk1")
+include_col<-colnames(full_data)
+include_col<-include_col[-1]
+include_col<-include_col[-5]
+
+for (i in 1:length(mis_classified_vector)){
+	model_fit<-knn.cv(full_data[include_col],full_data$"Mapk1",i)
+	#Use this if the output is 0 or 1
+	#mis_classified<-sum(abs(as.numeric(model_fit)-full_data$"Mapk1"))
+	#Squared error loss
+	mis_classified<-sum((as.numeric(model_fit)-full_data$"Mapk1")^2)
+	mis_classified_vector[i]<-mis_classified
+}
+
+############################
+#Post discussion and figuring out which predictor sets are best#
+#Want to calculate coefficients for these linear model  
+#Evaluate the fit via R^2 and Adjusted R^2
+model_1<-lm(Mapk1~Akt2+Rik+Pik3r3+ Rac1,data=full_data)
+
+summary(model_1)
+# Call:
+# lm(formula = Mapk1 ~ Akt2 + Rik + Pik3r3 + Rac1, data = full_data)
+
+# Residuals:
+     # Min       1Q   Median       3Q      Max 
+# -0.16348 -0.06566  0.00381  0.05495  0.17092 
+
+# Coefficients:
+            # Estimate Std. Error t value Pr(>|t|)    
+# (Intercept) -0.44461    0.15706  -2.831 0.007643 ** 
+# Akt2        -0.40548    0.16922  -2.396 0.022047 *  
+# Rik          0.22072    0.10178   2.169 0.036994 *  
+# Pik3r3       0.24399    0.11350   2.150 0.038565 *  
+# Rac1         0.31716    0.08464   3.747 0.000644 ***
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Residual standard error: 0.08281 on 35 degrees of freedom
+# Multiple R-squared:  0.6101,    Adjusted R-squared:  0.5656 
+# F-statistic: 13.69 on 4 and 35 DF,  p-value: 8.093e-07
+
+model_2<-lm(Mapk1~Rik+Pik3r3+Rac1+Nfat5,data=full_data)
+
+summary(model_2)
+
+# Call:
+# lm(formula = Mapk1 ~ Rik + Pik3r3 + Rac1 + Nfat5, data = full_data)
+
+# Residuals:
+      # Min        1Q    Median        3Q       Max 
+# -0.217531 -0.060483  0.007193  0.051996  0.164377 
+
+# Coefficients:
+            # Estimate Std. Error t value Pr(>|t|)   
+# (Intercept)  -0.3109     0.1979  -1.571  0.12515   
+# Rik           0.1741     0.1143   1.523  0.13665   
+# Pik3r3        0.2331     0.1304   1.788  0.08249 . 
+# Rac1          0.2570     0.0909   2.827  0.00772 **
+# Nfat5         0.0864     0.1397   0.619  0.54019   
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Residual standard error: 0.08886 on 35 degrees of freedom
+# Multiple R-squared:  0.5511,    Adjusted R-squared:  0.4998 
+# F-statistic: 10.74 on 4 and 35 DF,  p-value: 8.703e-06
+
+model_3<-lm(Mapk1~Pik3r3+Rac1,data=full_data)
+
+summary(model_3)
+
+# Call:
+# lm(formula = Mapk1 ~ Pik3r3 + Rac1, data = full_data)
+
+# Residuals:
+     # Min       1Q   Median       3Q      Max 
+# -0.19118 -0.05534 -0.00354  0.06817  0.20241 
+
+# Coefficients:
+            # Estimate Std. Error t value Pr(>|t|)    
+# (Intercept) -0.05643    0.10239  -0.551 0.584876    
+# Pik3r3       0.40410    0.09469   4.268 0.000132 ***
+# Rac1         0.27832    0.09016   3.087 0.003821 ** 
+# ---
+# Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+# Residual standard error: 0.0908 on 37 degrees of freedom
+# Multiple R-squared:  0.5045,    Adjusted R-squared:  0.4777 
+# F-statistic: 18.83 on 2 and 37 DF,  p-value: 2.284e-06

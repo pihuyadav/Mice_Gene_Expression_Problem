@@ -10,58 +10,80 @@ X <- as.matrix(x_data)
 Y<-y_data
 cvfit <- glmnet::cv.glmnet(X, Y)
 coef(cvfit, s = "lambda.1se")
-24 x 1 sparse Matrix of class "dgCMatrix"
-                      1
-(Intercept) -0.04389607
-Cdc42        .         
-Pla2g6       .         
-Akt2         .         
-Plcg2        .         
-Rac2         .         
-Rik          0.06664806
-Mapkapk2     .         
-Pik3cd       .         
-Pla2g5       .         
-Sphk2        .         
-Map2k1       .         
-Pik3r3       0.15013675
-Ptk2         .         
-Nras         .         
-Nos3         .         
-Pik3r1       .         
-Pik3ca       .         
-Ppp3cb       .         
-Map2k2       .         
-Nfatc4       .         
-Mapk13       .         
-Rac1         0.08441959
-Nfat5        0.01435892  
+# 24 x 1 sparse Matrix of class "dgCMatrix"
+                      # 1
+# (Intercept) -0.04389607
+# Cdc42        .         
+# Pla2g6       .         
+# Akt2         .         
+# Plcg2        .         
+# Rac2         .         
+# Rik          0.06664806
+# Mapkapk2     .         
+# Pik3cd       .         
+# Pla2g5       .         
+# Sphk2        .         
+# Map2k1       .         
+# Pik3r3       0.15013675
+# Ptk2         .         
+# Nras         .         
+# Nos3         .         
+# Pik3r1       .         
+# Pik3ca       .         
+# Ppp3cb       .         
+# Map2k2       .         
+# Nfatc4       .         
+# Mapk13       .         
+# Rac1         0.08441959
+# Nfat5        0.01435892  
+
+#Need to use the lambda.min which corresponds that gives minimum cvm ( mean cross-validated error ).
+coef(cvfit, s = "lambda.min")
+# 24 x 1 sparse Matrix of class "dgCMatrix"
+                  # 1
+# (Intercept) -0.1454
+# Cdc42        .     
+# Pla2g6       .     
+# Akt2        -0.0006
+# Plcg2        .     
+# Rac2         .     
+# Rik          0.1115
+# Mapkapk2     .     
+# Pik3cd      -0.0376
+# Pla2g5       .     
+# Sphk2        .     
+# Map2k1       .     
+# Pik3r3       0.1652
+# Ptk2         .     
+# Nras         .     
+# Nos3         .     
+# Pik3r1       .     
+# Pik3ca       .     
+# Ppp3cb       .     
+# Map2k2       .     
+# Nfatc4       .     
+# Mapk13       .     
+# Rac1         0.1388
+# Nfat5        0.0569
+min_lambda_model<-lm(Mapk1 ~ Akt2+Rik+Pik3cd+Pik3r3+Rac1+Nfat5,data=full_data)
+summary(min_lambda_model)
 
 cvfit$lambda.1se
 [1] 0.03971015
-#Cross-validation error is 0.0121 as given by cvfit.cvm
+#Cross-validation error is 0.013 as given by cvfit.cvm
 #From this value we see that the lasso actually performs a good prediction, as the error is small.
 
 #Using exhaustive best subset selection with BIC as the selection criteria
 install.packages("leaps")
 library(leaps)
 regsubsets.out <-
-
-    regsubsets(Mapk1~ Cdc42+Pla2g6+Akt2+Plcg2+Rac2+Rik+Mapkapk2 +Pik3cd+Pla2g5+Sphk2+Map2k1+Pik3r3+Ptk2+Nras+Nos3+Pik3r1+Pik3ca+Ppp3cb+Map2k2+Nfatc4+Mapk13+Rac1+Nfat5       
-
-,
-
+    regsubsets(Mapk1~ Cdc42+Pla2g6+Akt2+Plcg2+Rac2+Rik+Mapkapk2 +Pik3cd+Pla2g5+Sphk2+Map2k1+Pik3r3+Ptk2+Nras+Nos3+Pik3r1+Pik3ca+Ppp3cb+Map2k2+Nfatc4+Mapk13+Rac1+Nfat5,
                data = full_data,
-
                nbest = 1,       # 1 best model for each number of predictors
-
                nvmax = NULL,    # NULL for no limit on number of variables
-
                force.in = NULL, force.out = NULL,
-
                method = "exhaustive")
-
-summary(regsubsets.out)
+summary(regsubsets.out$bic)
 #Subset selection object
 #Call: regsubsets.formula(Mapk1 ~ Cdc42 + Pla2g6 + Akt2 + Plcg2 + Rac2 + 
 #    Rik + Mapkapk2 + Pik3cd + Pla2g5 + Sphk2 + Map2k1 + Pik3r3 + 
@@ -173,3 +195,22 @@ plot(regsubsets.out)
 coef(regsubsets.out,4)
 #(Intercept)        Akt2         Rik      Pik3r3        Rac1 
 # -0.4446112  -0.4054803   0.2207164   0.2439920   0.3171645 
+
+#Want to know the specific BIC value for the top two models 
+#since the graphic doesn't show more decimal places.
+sort(summary(regsubsets.out)$bic)
+
+
+
+x_data<-subset(full_data, select = -c(Mapk1,Gene.Name) )
+cormat=cor(x_data,x_data)
+num0.5=sum(cormat>0.5)
+m=-0.5
+numless0.5=sum(cormat<m)
+# genes that are negatively correlated with a negative value of less than -0.5 are Pik3cd & Rac1 and Plcg2 & Nos3
+# genes that are positively correlated with a value of greater than 0.5
+# Map2k1 and  Pik3r3 and Nfat5 with Rik
+# Rac1 with Pla2g6
+# Map2k1 with Pik3r3
+# Nfat5 with Pik3r3
+# Rak1 with Ptk2
